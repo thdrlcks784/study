@@ -1,0 +1,87 @@
+#include <stdio.h>
+#include <windows.h>
+void gotoxy(int x, int y);
+void KeyEvent();
+void gameboard();
+void draw_main();
+void automove();
+void player();
+#define main_frame_x 60
+#define main_frame_y 30
+#define EMPTY 0
+#define WALL 1
+#define PLAYER 2
+#define ENEMY 3
+#define PLAYER_LENGTH 1
+int main_board[main_frame_y][main_frame_x];
+int main_x_adj = 0, main_y_adj = 0;
+int main_x = 2, main_y = 1;
+int main() {
+	gameboard();
+	draw_main();
+	player();
+	return 0;
+}
+void gotoxy(int x, int y) {
+	COORD pos = { x,y };
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+}
+void KeyEvent() {
+	char szChoice = 0;
+	if (kbhit()) {
+		szChoice = getch();
+		switch (szChoice) {
+		case 'a':
+			main_x=main_x-2;
+			break;
+		case 'd':
+			main_x=main_x+2;
+			break;
+		case 'w':
+			main_y--;
+			break;
+		case 's':
+			main_y++;
+			break;
+		}
+	}
+}
+void gameboard() {
+	for (int x = 0; x < main_frame_x; x=x+2) {
+		main_board[0][x] = WALL;
+		main_board[29][x] = WALL;
+	}
+	for (int y = 1; y < main_frame_y - 1; y++) {
+		main_board[y][0] = WALL;
+		main_board[y][59] = WALL;
+	}
+	for (int y = 1; y < main_frame_y - 1; y++) {
+		for (int x = 1; x < main_frame_x - 1; x=x+2) {
+			main_board[y][x] = EMPTY;
+		}
+	}
+}
+void draw_main() {
+	for (int y = 0; y < main_frame_y; y++) {
+		for (int x = 0; x < main_frame_x; x++) {
+			gotoxy(main_x_adj + x, main_y_adj + y);
+			switch (main_board[y][x]) {
+			case 0:
+				printf("  ");
+				break;
+			case 1:
+				printf("■");
+				break;
+			}
+		
+		}
+	}
+	
+}
+void player() {
+	
+
+}
+void automove() {
+
+}
