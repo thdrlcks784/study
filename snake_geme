@@ -19,7 +19,6 @@ int main_x = 2, main_y = 1;
 int main() {
 	gameboard();
 	draw_main();
-	player();
 	return 0;
 }
 void gotoxy(int x, int y) {
@@ -51,9 +50,9 @@ void gameboard() {
 		main_board[0][x] = WALL;
 		main_board[29][x] = WALL;
 	}
-	for (int y = 1; y < main_frame_y - 1; y++) {
+	for (int y = 1; y < main_frame_y -1 ; y++) {
 		main_board[y][0] = WALL;
-		main_board[y][59] = WALL;
+		main_board[y][58] = WALL;
 	}
 	for (int y = 1; y < main_frame_y - 1; y++) {
 		for (int x = 1; x < main_frame_x - 1; x=x+2) {
@@ -67,7 +66,7 @@ void draw_main() {
 			gotoxy(main_x_adj + x, main_y_adj + y);
 			switch (main_board[y][x]) {
 			case 0:
-				printf("  ");
+				printf("");
 				break;
 			case 1:
 				printf("■");
@@ -79,7 +78,7 @@ void draw_main() {
 	
 }
 void player() {
-	
+	gotoxy(main_x, main_y);
 
 }
 void automove() {
