@@ -1,0 +1,19 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define max_size 20
+typedef struct test {
+	int item;
+	char string[max_size]; 
+}t;
+int main() {
+	t* input;  
+	input = (t*)malloc(sizeof(t));
+	input->item = 100;
+	strcpy(input->string, "just testing");
+	printf("%d %s", input->item, input->string);
+	free(input);
+	return 0;
+}
