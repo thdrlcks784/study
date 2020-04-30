@@ -1,0 +1,98 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+void title();
+void fileopen();
+void read_parameter();
+void front();
+void back();
+char filename[10];
+int fd;
+int count =0;
+int page = 1;
+int work;
+struct vparameter{
+	int vseq;
+	char vkey[10];
+	char vpvalue[30];
+};
+void title(){
+	printf("Seq\tParameter\tParameter value\n");
+	printf("---\t---------\t---------------\n");
+	read_parameter();
+	printf("---------------------------------------\n");
+	printf("1. 입력 2. 수정 4. 삭제 7. 앞으로 8. 뒤로 9. 종료\n원하는 작업을 선택하세요 : \n");
+	scanf("%d",&work);
+}
+void fileopen(){
+	if((fd = open(filename, O_RDWR|O_CREAT|O_APPEND,0640))==-1){
+		printf("File open Error\n");
+		exit(1);	
+	}
+}
+void insert(){
+	struct vparameter v;
+	fileopen();
+	memset(v.vkey,0,sizeof(v.vkey));
+	memset(v.vpvalue,0,sizeof(v.vpvalue));
+	lseek(fd,count*sizeof(v),SEEK_SET);
+	v.vseq = count +1;
+	printf("Parameter Key : ");
+	scanf("%s",v.vkey);
+	printf("\nParameter value : ");
+	scanf("%s",v.vpvalue);
+	write(fd,&v,sizeof(v));
+	count ++;
+	close(fd);
+}
+void read_parameter(){
+	int line = ;
+	line -=1;
+	fileopen();
+	struct vparameter v;
+	while(line%5 == 0){
+		lseek(fd,line*sizeof(v),SEEK_SET);
+		if(read(fd,&v,sizeof(v))>0){
+			printf("%d\t%s\t\t%s\n",v.vseq,v.vkey,v.vpvalue);
+		}
+		else {
+			printf("\n");
+		}
+		line++;
+		
+	}
+	close(fd);
+}
+void front(){
+	page=page - 5;
+}
+void back(){
+	page=page + 5;
+}	
+int main(){
+	struct vparameter v;
+	printf("\t환경 변수 설정 v1.0\tFile name : ");
+	scanf("%s",filename);	
+	v.vseq = 1;	
+	while(1){
+		title();
+		switch(work){
+		case 1:
+			insert();
+			break;
+		case 7:
+			if(page==1){printf("맨 앞 페이지 입니다.\n");}
+			else{front();}
+			break;
+		case 8:
+			if(((count/5)+1)==page){printf("맨 뒷 페이지 입니다.\n");}
+			else{back();}
+			break;
+		default:
+			printf("잘못된 입력입니다.\n");
+			break;
+		}
+	}
+}
