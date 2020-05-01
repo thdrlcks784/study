@@ -82,10 +82,13 @@ void modify(){
 	int modify;	
 	printf("수정을 진행할 seq_num 을 입력하시오. : ");
 	scanf("%d",&modify);
-	fileopen();
+	if((fd = open(filename, O_RDWR|O_CREAT,0640))==-1){
+		printf("File open Error\n");
+		exit(1);	
+	}
 	memset(v.vkey,0,sizeof(v.vkey));
 	memset(v.vpvalue,0,sizeof(v.vpvalue));
-	lseek(fd,count*sizeof(v),SEEK_SET);
+	lseek(fd,(modify-1)*sizeof(v),SEEK_SET);
 	v.vseq = modify;
 	printf("Parameter Key : ");
 	scanf("%s",v.vkey);
