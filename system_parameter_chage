@@ -8,11 +8,13 @@ void fileopen();
 void read_parameter();
 void front();
 void back();
+int return_vseq();
+void modify();
 char filename[10];
+int count;
 int fd;
-int count =0;
-int page = 1;
-int work;
+int page = 0;
+char work;
 struct vparameter{
 	int vseq;
 	char vkey[10];
@@ -24,8 +26,19 @@ void title(){
 	read_parameter();
 	printf("---------------------------------------\n");
 	printf("1. 입력 2. 수정 4. 삭제 7. 앞으로 8. 뒤로 9. 종료\n원하는 작업을 선택하세요 : \n");
-	scanf("%d",&work);
 }
+int return_vseq(){
+	int i = 0;
+	struct vparameter v;
+	fileopen();
+	while(1){
+		lseek(fd,i*sizeof(v),SEEK_SET);
+		if(read(fd,&v,sizeof(v))==0){break;}
+		i++;
+	}
+	return i+1;
+}
+
 void fileopen(){
 	if((fd = open(filename, O_RDWR|O_CREAT|O_APPEND,0640))==-1){
 		printf("File open Error\n");
@@ -48,11 +61,10 @@ void insert(){
 	close(fd);
 }
 void read_parameter(){
-	int line = ;
-	line -=1;
+	int line = page*5;
 	fileopen();
 	struct vparameter v;
-	while(line%5 == 0){
+	for(int i = 0;i<5;i++){
 		lseek(fd,line*sizeof(v),SEEK_SET);
 		if(read(fd,&v,sizeof(v))>0){
 			printf("%d\t%s\t\t%s\n",v.vseq,v.vkey,v.vpvalue);
@@ -65,31 +77,56 @@ void read_parameter(){
 	}
 	close(fd);
 }
+void modify(){
+	struct vparameter v;
+	int modify;	
+	printf("수정을 진행할 seq_num 을 입력하시오. : ");
+	scanf("%d",&modify);
+	fileopen();
+	memset(v.vkey,0,sizeof(v.vkey));
+	memset(v.vpvalue,0,sizeof(v.vpvalue));
+	lseek(fd,count*sizeof(v),SEEK_SET);
+	v.vseq = modify;
+	printf("Parameter Key : ");
+	scanf("%s",v.vkey);
+	printf("\nParameter value : ");
+	scanf("%s",v.vpvalue);
+	write(fd,&v,sizeof(v));
+	close(fd);
+
+}
 void front(){
-	page=page - 5;
+	page--;
 }
 void back(){
-	page=page + 5;
+	page++;
 }	
 int main(){
 	struct vparameter v;
 	printf("\t환경 변수 설정 v1.0\tFile name : ");
 	scanf("%s",filename);	
-	v.vseq = 1;	
+	v.vseq = return_vseq();
+	count = v.vseq-1;	
 	while(1){
 		title();
+		scanf("%s",&work);
 		switch(work){
-		case 1:
+		case '1':
 			insert();
 			break;
-		case 7:
-			if(page==1){printf("맨 앞 페이지 입니다.\n");}
+		case '2':
+			modify();
+			break;
+		case '7':
+			if(page==0){printf("맨 앞 페이지 입니다.\n");}
 			else{front();}
 			break;
-		case 8:
-			if(((count/5)+1)==page){printf("맨 뒷 페이지 입니다.\n");}
+		case '8':
+			if((count/5)==page){printf("맨 뒷 페이지 입니다.\n");}
 			else{back();}
 			break;
+		case '9':
+			exit(1);
 		default:
 			printf("잘못된 입력입니다.\n");
 			break;
