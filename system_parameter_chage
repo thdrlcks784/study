@@ -1,15 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-void title();
+void title(); 
 void fileopen();
 void read_parameter();
 void front();
 void back();
 int return_vseq();
 void modify();
+void remove_parameter();
 char filename[10];
 int count;
 int fd;
@@ -98,6 +100,29 @@ void modify(){
 	close(fd);
 
 }
+void remove_parameter(){
+	struct vparameter v;
+	int seq_num,vseq;
+	char vkey[11],vpvalue[31];
+	printf("삭제할 seq_num을 입력하시오. : ");
+	scanf("%d",&seq_num);
+	if((fd = open(filename, O_RDWR|O_CREAT,0640))==-1){
+		printf("File open Error\n");
+		exit(1);	
+	}
+	
+	lseek(fd,(seq_num)*sizeof(v),SEEK_SET);
+	strcpy(vkey,v.vkey);
+	strcpy(vpvalue,v.vpvalue);
+	/*lseek(fd,(seq_num-1)*sizeof(v),SEEK_SET);
+	v.vseq = seq_num;
+	strcpy(v.vkey,vkey);
+	strcpy(v.vpvalue,vpvalue);
+	write(fd,&v,sizeof(v));*/
+	close(fd);
+	printf("\n\n%s %s\n\n",vkey,vpvalue);
+	
+}
 void front(){
 	page--;
 }
@@ -119,6 +144,9 @@ int main(){
 			break;
 		case '2':
 			modify();
+			break;
+		case '4':
+			remove_parameter();
 			break;
 		case '7':
 			if(page==0){printf("맨 앞 페이지 입니다.\n");}
