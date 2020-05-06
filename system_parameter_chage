@@ -14,11 +14,13 @@ void back();					/*함수 원형 정의*/
 int return_vseq();
 void modify();
 void remove_parameter();
-char filename[10];
+void error_check();
 /*---------------------------------------------------------------------------------------------------*/
+char filename[10];
 int count;
-int fd;
-int page = 0;					/*전역변수 선언*/
+int fd;					/*전역변수 선언*/
+int page = 0;					
+int err_ch=0;
 char work;
 /*---------------------------------------------------------------------------------------------------*/
 struct vparameter {	
@@ -27,12 +29,19 @@ struct vparameter {
 	char vpvalue[30];
 };
 /*---------------------------------------------------------------------------------------------------*/
-void title() {				
+void title() {		
+	printf("\t환경 변수 설정 v1.0\tFile name : %s \n",filename);
+	printf("========================================================================\n");	
+	printf("\t\t환경 변수 설정 화면\n");	
 	printf("Seq\tParameter\tParameter value\n");
 	printf("---\t---------\t---------------\n");	/*메인 title 출력 함수*/
 	read_parameter();
 	printf("---------------------------------------\n");
-	printf("1. 입력 2. 수정 4. 삭제 7. 앞으로 8. 뒤로 9. 종료\n원하는 작업을 선택하세요 : \n");
+	printf("1. 입력 2. 수정 4. 삭제 7. 앞으로 8. 뒤로 9. 종료\n");
+	printf("========================================================================\n");
+	error_check(err_ch);
+	err_ch = 0;
+	printf("원하는 작업을 선택하세요 : ");
 }
 /*---------------------------------------------------------------------------------------------------*/
 int return_vseq() {		/*파일의 마지막 vseq번호를 리턴하기 위한 함수*/
@@ -92,22 +101,28 @@ void modify() {				/*환경변수 수정을 위한 함수*/
 	int modify;
 	printf("수정을 진행할 seq_num 을 입력하시오. : ");
 	scanf("%d", &modify);
-	if ((fd = open(filename, O_RDWR, 0640)) == -1) {
-		printf("File open Error\n");
-		exit(1);
+	if(modify>count||modify<1){
+		err_ch = 1;
+	}	
+	else{
+		if ((fd = open(filename, O_RDWR, 0640)) == -1) {
+			printf("File open Error\n");
+			exit(1);
+		}
+		lseek(fd, (modify - 1) * sizeof(v), SEEK_SET);
+		v.vseq = modify;
+		printf("Parameter Key : ");
+		scanf("%s", v.vkey);
+		printf("\nParameter value : ");
+		scanf("%s", v.vpvalue);
+		write(fd, &v, sizeof(v));
+		close(fd);
 	}
-	lseek(fd, (modify - 1) * sizeof(v), SEEK_SET);
-	v.vseq = modify;
-	printf("Parameter Key : ");
-	scanf("%s", v.vkey);
-	printf("\nParameter value : ");
-	scanf("%s", v.vpvalue);
-	write(fd, &v, sizeof(v));
-	close(fd);
 
 }
 /*---------------------------------------------------------------------------------------------------*/
 void remove_parameter() {		/*환경변수 삭제함수*/
+	if(count ==0){err_ch =1;return;}
 	struct vparameter v1;
 	struct vparameter v2;
 	if ((fd = open(filename, O_RDWR, 0640)) == -1) {
@@ -118,6 +133,7 @@ void remove_parameter() {		/*환경변수 삭제함수*/
 	char vkey[11], vpvalue[31];
 	printf("삭제할 seq_num을 입력하시오. : ");
 	scanf("%d", &seq_num);
+	if(seq_num>count){err_ch = 1;return;}
 	for (int i = seq_num; i < last_num; i++) {
 		lseek(fd, i * sizeof(v1), SEEK_SET);
 		read(fd, &v1, sizeof(v1));
@@ -127,9 +143,11 @@ void remove_parameter() {		/*환경변수 삭제함수*/
 		write(fd, &v2, sizeof(struct vparameter));
 
 	}
-	ftruncate(fd, sizeof(struct vparameter) * v1.vseq);
+	lseek(fd,0,SEEK_SET);
+	ftruncate(fd, sizeof(struct vparameter) * (count-1));
 	close(fd);
 	count--;
+	if(count%5==0&&page>0){front();}
 
 }
 /*---------------------------------------------------------------------------------------------------*/
@@ -140,6 +158,23 @@ void back() {
 	page++;
 }
 /*---------------------------------------------------------------------------------------------------*/
+void error_check(int check){		/*오류메세지 출력 함수*/
+	switch(check){
+		case 1 :
+			printf("입력하신 seq_num은 존재하지 않거나 파일이 비어있습니다.\n");
+			break;
+		case 2 :
+			printf("맨 앞 페이지 입니다.\n");
+			break;
+		case 3 :
+			printf("맨 뒷 페이지 입니다.\n");
+			break;
+		case 4 :
+			printf("잘못된 입력입니다.\n");
+			break;
+	}
+}
+/*---------------------------------------------------------------------------------------------------*/
 int main() {		/*main 함수*/
 	struct vparameter v;
 	printf("\t환경 변수 설정 v1.0\tFile name : ");
@@ -147,6 +182,7 @@ int main() {		/*main 함수*/
 	v.vseq = return_vseq();
 	count = v.vseq;
 	while (1) {
+		system("clear");
 		title();
 		scanf("%s", &work);
 		switch (work) {
@@ -156,21 +192,24 @@ int main() {		/*main 함수*/
 		case '2':
 			modify();
 			break;
+		case '3':
+			printf("%d : %d : %d\n",v.vseq,count,page);	
+			break;
 		case '4':
 			remove_parameter();
 			break;
 		case '7':
-			if (page == 0) { printf("맨 앞 페이지 입니다.\n"); }
+			if (page == 0) { err_ch=2; }
 			else { front(); }
 			break;
 		case '8':
-			if (((count - 1) / 5) == page) { printf("맨 뒷 페이지 입니다.\n"); }
+			if (((count - 1) / 5) == page) { err_ch =3; }
 			else { back(); }
 			break;
 		case '9':
 			exit(1);
 		default:
-			printf("잘못된 입력입니다.\n");
+			err_ch = 4;
 			break;
 		}
 	}
