@@ -1,183 +1,171 @@
+/*---------------------------------------------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string.h>				/*헤더파일 정의*/
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-void title(); 
+/*---------------------------------------------------------------------------------------------------*/
+void title();
 void fileopen();
 void read_parameter();
 void front();
-void back();
+void back();					/*함수 원형 정의*/
 int return_vseq();
 void modify();
 void remove_parameter();
 char filename[10];
+/*---------------------------------------------------------------------------------------------------*/
 int count;
 int fd;
-int page = 0;
+int page = 0;					/*전역변수 선언*/
 char work;
-struct vparameter{
+/*---------------------------------------------------------------------------------------------------*/
+struct vparameter {	
 	int vseq;
-	char vkey[10];
+	char vkey[10];			/*환경변수 구조체 선언*/
 	char vpvalue[30];
 };
-void title(){
+/*---------------------------------------------------------------------------------------------------*/
+void title() {				
 	printf("Seq\tParameter\tParameter value\n");
-	printf("---\t---------\t---------------\n");
+	printf("---\t---------\t---------------\n");	/*메인 title 출력 함수*/
 	read_parameter();
 	printf("---------------------------------------\n");
 	printf("1. 입력 2. 수정 4. 삭제 7. 앞으로 8. 뒤로 9. 종료\n원하는 작업을 선택하세요 : \n");
 }
-int return_vseq(){
+/*---------------------------------------------------------------------------------------------------*/
+int return_vseq() {		/*파일의 마지막 vseq번호를 리턴하기 위한 함수*/
 	int i = 0;
 	struct vparameter v;
 	fileopen();
-	while(1){
-		lseek(fd,i*sizeof(v),SEEK_SET);
-		if(read(fd,&v,sizeof(v))==0){break;}
+	while (1) {
+		lseek(fd, i * sizeof(v), SEEK_SET);
+		if (read(fd, &v, sizeof(v)) == 0) { break; }
 		i++;
 	}
 	close(fd);
 	return i;
 }
-
-void fileopen(){
-	if((fd = open(filename, O_RDWR|O_CREAT|O_APPEND,0640))==-1){
+/*---------------------------------------------------------------------------------------------------*/
+void fileopen() {		/*fileopen 함수*/
+	if ((fd = open(filename, O_RDWR | O_CREAT | O_APPEND, 0640)) == -1) {
 		printf("File open Error\n");
-		exit(1);	
+		exit(1);
 	}
 }
-void insert(){
+/*---------------------------------------------------------------------------------------------------*/
+void insert() {			/*환경변수 입력 함수*/
 	struct vparameter v;
 	fileopen();
-	memset(v.vkey,0,sizeof(v.vkey));
-	memset(v.vpvalue,0,sizeof(v.vpvalue));
-	lseek(fd,count*sizeof(v),SEEK_SET);
-	v.vseq = count +1;
+	lseek(fd, count * sizeof(v), SEEK_SET);
+	v.vseq = count + 1;
 	printf("Parameter Key : ");
-	scanf("%s",v.vkey);
+	scanf("%s", v.vkey);
 	printf("\nParameter value : ");
-	scanf("%s",v.vpvalue);
-	write(fd,&v,sizeof(v));
-	count ++;
+	scanf("%s", v.vpvalue);
+	write(fd, &v, sizeof(v));
+	count++;
 	close(fd);
 }
-void read_parameter(){
-	int line = page*5;
+/*---------------------------------------------------------------------------------------------------*/
+void read_parameter() {		/*환경변수 출력 함수*/
+	int line = page * 5;	/*이 함수는 title에서 5개씩 환경변수를 출력하기 위해 사용*/
 	fileopen();
 	struct vparameter v;
-	for(int i = 0;i<5;i++){
-		lseek(fd,line*sizeof(v),SEEK_SET);
-		if(read(fd,&v,sizeof(v))>0){
-			printf("%d\t%s\t\t%s\n",v.vseq,v.vkey,v.vpvalue);
+	for (int i = 0; i < 5; i++) {
+		lseek(fd, line * sizeof(v), SEEK_SET);
+		if (read(fd, &v, sizeof(v)) > 0) {
+			printf("%d\t%s\t\t%s\n", v.vseq, v.vkey, v.vpvalue);
 		}
 		else {
 			printf("\n");
 		}
 		line++;
-		
+
 	}
 	close(fd);
 }
-void modify(){
+/*---------------------------------------------------------------------------------------------------*/
+void modify() {				/*환경변수 수정을 위한 함수*/
 	struct vparameter v;
-	int modify;	
+	int modify;
 	printf("수정을 진행할 seq_num 을 입력하시오. : ");
-	scanf("%d",&modify);	
-	if((fd = open(filename, O_RDWR,0640))==-1){
+	scanf("%d", &modify);
+	if ((fd = open(filename, O_RDWR, 0640)) == -1) {
 		printf("File open Error\n");
-		exit(1);	
+		exit(1);
 	}
-	memset(v.vkey,0,sizeof(v.vkey));
-	memset(v.vpvalue,0,sizeof(v.vpvalue));
-	lseek(fd,(modify-1)*sizeof(v),SEEK_SET);
+	lseek(fd, (modify - 1) * sizeof(v), SEEK_SET);
 	v.vseq = modify;
 	printf("Parameter Key : ");
-	scanf("%s",v.vkey);
+	scanf("%s", v.vkey);
 	printf("\nParameter value : ");
-	scanf("%s",v.vpvalue);
-	write(fd,&v,sizeof(v));
+	scanf("%s", v.vpvalue);
+	write(fd, &v, sizeof(v));
 	close(fd);
 
 }
-void remove_parameter(){
+/*---------------------------------------------------------------------------------------------------*/
+void remove_parameter() {		/*환경변수 삭제함수*/
 	struct vparameter v1;
 	struct vparameter v2;
-	if((fd = open(filename, O_RDWR,0640))==-1){
+	if ((fd = open(filename, O_RDWR, 0640)) == -1) {
 		printf("File open Error\n");
-		exit(1);	
+		exit(1);
 	}
-	int seq_num,last_num = count;
-	char vkey[11],vpvalue[31];
+	int seq_num, last_num = count;
+	char vkey[11], vpvalue[31];
 	printf("삭제할 seq_num을 입력하시오. : ");
-	scanf("%d",&seq_num);
-	for(int i =seq_num;i<last_num;i++){	
-		lseek(fd,i*sizeof(v1),SEEK_SET);
-		read(fd,&v1,sizeof(v1));
+	scanf("%d", &seq_num);
+	for (int i = seq_num; i < last_num; i++) {
+		lseek(fd, i * sizeof(v1), SEEK_SET);
+		read(fd, &v1, sizeof(v1));
 		v1.vseq = i;
-		memcpy(&v2,&v1,sizeof(struct vparameter));
-		lseek(fd,(i-1)*sizeof(v1),SEEK_SET);
-		write(fd,&v2,sizeof(struct vparameter));
-		
+		memcpy(&v2, &v1, sizeof(struct vparameter));
+		lseek(fd, (i - 1) * sizeof(v1), SEEK_SET);
+		write(fd, &v2, sizeof(struct vparameter));
+
 	}
-	char buf[sizeof(struct vparameter)*v1.vseq];
-	lseek(fd,0,SEEK_SET);
-	memcpy(buf,&fd,sizeof(struct vparameter)*(v1.vseq));
+	ftruncate(fd, sizeof(struct vparameter) * v1.vseq);
 	close(fd);
-	
-	fd = open(filename, O_RDWR|O_TRUNC|O_APPEND,0640);
-	/*write(fd,buf,sizeof(struct vparameter)*(v1.vseq));
-	/*lseek(fd,(count-1)*sizeof(v1),SEEK_SET);
-	memcpy(&v1,&buf,sizeof(struct vparameter));
-	write(fd,&v1,sizeof(struct vparameter));*/
-	/*int file = lseek(fd,(count-1)*sizeof(v),SEEK_SET);*/
-	/*int file_1 = lseek(fd,count*sizeof(v),SEEK_SET);
-	lseek(fd,(count-1)*sizeof(v),SEEK_SET);
-	write(fd,file_1,sizeof(v));*/
-	/*write(fd,,sizeof(v));*/
-	/*count--;*/
-	close(fd);
-	
-	
+	count--;
+
 }
-void front(){
-	page--;
+/*---------------------------------------------------------------------------------------------------*/
+void front() {		/*page변경 함수*/
+	page--;			
 }
-void back(){
+void back() {
 	page++;
-}	
-int main(){
+}
+/*---------------------------------------------------------------------------------------------------*/
+int main() {		/*main 함수*/
 	struct vparameter v;
 	printf("\t환경 변수 설정 v1.0\tFile name : ");
-	scanf("%s",filename);	
+	scanf("%s", filename);
 	v.vseq = return_vseq();
-	count = v.vseq;	
-	while(1){
-		/*v.vseq = return_vseq();
-		count = v.vseq;		*/	
+	count = v.vseq;
+	while (1) {
 		title();
-		scanf("%s",&work);
-		switch(work){
+		scanf("%s", &work);
+		switch (work) {
 		case '1':
 			insert();
 			break;
 		case '2':
 			modify();
 			break;
-		case '3':
-			printf("%d:%d:%d\n",return_vseq(),count,page);
-			break;
 		case '4':
 			remove_parameter();
 			break;
 		case '7':
-			if(page==0){printf("맨 앞 페이지 입니다.\n");}
-			else{front();}
+			if (page == 0) { printf("맨 앞 페이지 입니다.\n"); }
+			else { front(); }
 			break;
 		case '8':
-			if(((count-1)/5)==page){printf("맨 뒷 페이지 입니다.\n");}
-			else{back();}
+			if (((count - 1) / 5) == page) { printf("맨 뒷 페이지 입니다.\n"); }
+			else { back(); }
 			break;
 		case '9':
 			exit(1);
