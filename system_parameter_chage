@@ -38,7 +38,8 @@ int return_vseq(){
 		if(read(fd,&v,sizeof(v))==0){break;}
 		i++;
 	}
-	return i+1;
+	close(fd);
+	return i;
 }
 
 void fileopen(){
@@ -83,8 +84,8 @@ void modify(){
 	struct vparameter v;
 	int modify;	
 	printf("수정을 진행할 seq_num 을 입력하시오. : ");
-	scanf("%d",&modify);
-	if((fd = open(filename, O_RDWR|O_CREAT,0640))==-1){
+	scanf("%d",&modify);	
+	if((fd = open(filename, O_RDWR,0640))==-1){
 		printf("File open Error\n");
 		exit(1);	
 	}
@@ -101,26 +102,43 @@ void modify(){
 
 }
 void remove_parameter(){
-	struct vparameter v;
-	int seq_num,vseq;
-	char vkey[11],vpvalue[31];
-	printf("삭제할 seq_num을 입력하시오. : ");
-	scanf("%d",&seq_num);
-	if((fd = open(filename, O_RDWR|O_CREAT,0640))==-1){
+	struct vparameter v1;
+	struct vparameter v2;
+	if((fd = open(filename, O_RDWR,0640))==-1){
 		printf("File open Error\n");
 		exit(1);	
 	}
-	
-	lseek(fd,(seq_num)*sizeof(v),SEEK_SET);
-	strcpy(vkey,v.vkey);
-	strcpy(vpvalue,v.vpvalue);
-	/*lseek(fd,(seq_num-1)*sizeof(v),SEEK_SET);
-	v.vseq = seq_num;
-	strcpy(v.vkey,vkey);
-	strcpy(v.vpvalue,vpvalue);
-	write(fd,&v,sizeof(v));*/
+	int seq_num,last_num = count;
+	char vkey[11],vpvalue[31];
+	printf("삭제할 seq_num을 입력하시오. : ");
+	scanf("%d",&seq_num);
+	for(int i =seq_num;i<last_num;i++){	
+		lseek(fd,i*sizeof(v1),SEEK_SET);
+		read(fd,&v1,sizeof(v1));
+		v1.vseq = i;
+		memcpy(&v2,&v1,sizeof(struct vparameter));
+		lseek(fd,(i-1)*sizeof(v1),SEEK_SET);
+		write(fd,&v2,sizeof(struct vparameter));
+		
+	}
+	char buf[sizeof(struct vparameter)*v1.vseq];
+	lseek(fd,0,SEEK_SET);
+	memcpy(buf,&fd,sizeof(struct vparameter)*(v1.vseq));
 	close(fd);
-	printf("\n\n%s %s\n\n",vkey,vpvalue);
+	
+	fd = open(filename, O_RDWR|O_TRUNC|O_APPEND,0640);
+	/*write(fd,buf,sizeof(struct vparameter)*(v1.vseq));
+	/*lseek(fd,(count-1)*sizeof(v1),SEEK_SET);
+	memcpy(&v1,&buf,sizeof(struct vparameter));
+	write(fd,&v1,sizeof(struct vparameter));*/
+	/*int file = lseek(fd,(count-1)*sizeof(v),SEEK_SET);*/
+	/*int file_1 = lseek(fd,count*sizeof(v),SEEK_SET);
+	lseek(fd,(count-1)*sizeof(v),SEEK_SET);
+	write(fd,file_1,sizeof(v));*/
+	/*write(fd,,sizeof(v));*/
+	/*count--;*/
+	close(fd);
+	
 	
 }
 void front(){
@@ -134,8 +152,10 @@ int main(){
 	printf("\t환경 변수 설정 v1.0\tFile name : ");
 	scanf("%s",filename);	
 	v.vseq = return_vseq();
-	count = v.vseq-1;	
+	count = v.vseq;	
 	while(1){
+		/*v.vseq = return_vseq();
+		count = v.vseq;		*/	
 		title();
 		scanf("%s",&work);
 		switch(work){
@@ -145,6 +165,9 @@ int main(){
 		case '2':
 			modify();
 			break;
+		case '3':
+			printf("%d:%d:%d\n",return_vseq(),count,page);
+			break;
 		case '4':
 			remove_parameter();
 			break;
@@ -153,7 +176,7 @@ int main(){
 			else{front();}
 			break;
 		case '8':
-			if((count/5)==page){printf("맨 뒷 페이지 입니다.\n");}
+			if(((count-1)/5)==page){printf("맨 뒷 페이지 입니다.\n");}
 			else{back();}
 			break;
 		case '9':
